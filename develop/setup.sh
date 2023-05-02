@@ -1,5 +1,8 @@
 #!/usr/bin/bash
 
+# a more detailed explanation about the setup can be found here:
+# https://medium.com/techlog/diving-into-linux-networking-and-docker-bridge-veth-and-iptables-a05eb27b1e72
+
 export BR_DEV='albr0'
 export BR_ADDR='172.16.10.1'
 export ALB_DEV='alb'
@@ -33,10 +36,12 @@ for i in {1..2}; do
   ip -n ns$i link set dev lo up
 done
 
-# creat bridge
+# create bridge
 ip link add $BR_DEV type bridge
 ip addr add $BR_ADDR/16 dev $BR_DEV
 ip link set dev $BR_DEV up
+# masquerade the outgoing traffic (i.e. from namespaces to host)
+iptables -t nat -A POSTROUTING -s $BR_ADDR/16 ! -o $BR_DEV -j MASQUERADE
 
 # setup ns ip and routes
 ip -n $ALB_NS addr add 172.16.11.2/16 dev $ALB_PEER

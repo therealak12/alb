@@ -1,5 +1,6 @@
 .PHONY: tidy vendor generate
 
+ALB_DEV ?= wlo1
 CLANG_VERSION ?= 14
 CFLAGS := -O2 -g -Wall -Werror $(CFLAGS)
 
@@ -15,7 +16,7 @@ generate:
 	go generate ./...
 
 run:
-	sudo /usr/local/go/bin/go run main.go --iface wlo1
+	sudo /usr/local/go/bin/go run main.go --iface $(ALB_DEV)
 
 setup-dev-env:
 	sudo ./develop/setup.sh

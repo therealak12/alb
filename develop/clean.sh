@@ -17,3 +17,5 @@ for i in {1..2}; do
 done
 
 ip link del ${BR_DEV}
+
+iptables -t nat -D POSTROUTING -s $BR_ADDR/16 ! -o $BR_DEV -j MASQUERADE
