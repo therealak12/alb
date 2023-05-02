@@ -67,26 +67,25 @@ int alb(struct xdp_md *ctx)
     // __u32 testValue = 5;
     // bpf_map_update_elem(&alb_targets, &key, &testValue, BPF_ANY);
 
-    __u32 *targetIP = 0;
-    __u32 targetIdx;
+    // __u32 targetIdx;
     // todo: find a better way than retrying
-    while (1)
-    {
-        // todo: a safer solution for generating random numbers :-?
-        targetIdx = bpf_get_prandom_u32() % MAX_MAP_TARGETS;
-        bpf_printk("random %i", targetIdx);
-        targetIP = bpf_map_lookup_elem(&alb_targets, &targetIdx);
-        if (!targetIP)
-        {
-            return XDP_PASS;
-        }
+    // while (1)
+    // {
+    //     // todo: a safer solution for generating random numbers :-?
+    //     targetIdx = bpf_get_prandom_u32() % MAX_MAP_TARGETS;
+    //     bpf_printk("random %i", targetIdx);
+    //     __u32 *targetIP = bpf_map_lookup_elem(&alb_targets, &targetIdx);
+    //     if (!targetIP)
+    //     {
+    //         return XDP_PASS;
+    //     }
 
-        bpf_printk("%i", *targetIP);
-        bpf_printk("\n\n");
-        break;
-    }
+    //     bpf_printk("%i", *targetIP);
+    //     bpf_printk("\n\n");
+    //     break;
+    // }
 
-    iph->daddr = *targetIP;
+    iph->daddr = (__u32)((172 + (16 << 8) + (22 << 16) + (2 << 24)));
     iph->check = ip4h_csum(iph);
 
     return XDP_TX;

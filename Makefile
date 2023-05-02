@@ -15,11 +15,15 @@ generate: export CFLAGS := $(CFLAGS)
 generate:
 	go generate ./...
 
-run:
-	sudo /usr/local/go/bin/go run main.go --iface $(ALB_DEV)
+run: generate
+	sudo ip netns exec alb /usr/local/go/bin/go run main.go --iface $(ALB_DEV)
+	#sudo /usr/local/go/bin/go run -exec "sudo ip netns exec alb" main.go --iface $(ALB_DEV)
 
 setup-dev-env:
 	sudo ./develop/setup.sh
 
 clean-dev-env:
 	sudo ./develop/clean.sh
+
+ns-tcpdump:
+	sudo ip netns exec $(NS) tcpdump -l -nn
