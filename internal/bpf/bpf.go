@@ -1,15 +1,21 @@
 package bpf
 
 import (
-	"github.com/cilium/ebpf/link"
 	"log"
 	"net"
 	"time"
+
+	"github.com/cilium/ebpf/link"
+	"github.com/cilium/ebpf/rlimit"
 )
 
 type BPF struct{}
 
 func New(ifaceName string) *BPF {
+	if err := rlimit.RemoveMemlock(); err != nil {
+		log.Fatalf("failed to remove memory lock, %v", err)
+	}
+
 	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
 		log.Fatalf("lookup network iface %q: %s", ifaceName, err)
@@ -24,13 +30,14 @@ func New(ifaceName string) *BPF {
 	l, err := link.AttachXDP(link.XDPOptions{
 		Program:   objs.Alb,
 		Interface: iface.Index,
+		Flags:     link.XDPGenericMode,
 	})
 	if err != nil {
 		log.Fatalf("failed to AttachXDP, %v", err)
 	}
 	defer l.Close()
 
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Hour)
 
 	return &BPF{}
 }

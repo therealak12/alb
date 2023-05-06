@@ -14,7 +14,21 @@ go install github.com/cilium/ebpf/cmd/bpf2go@latest
 git clone https://github.com/libbpf/libbpf.git /tmp/libbpf
 cd /tmp/libbpf/src
 make -j`nproc`
-BUILD_STATIC_ONLY=1 NO_PKG_CONFIG=1 PREFIX=/usr/local/bpf make install
+BUILD_STATIC_ONLY=1 NO_PKG_CONFIG=1 make install
+```
+
+### Install bpftool
+
+```shell
+rm /usr/sbin/bpftool
+
+apt update && apt install -y git
+cd / && git clone --recurse-submodules https://github.com/libbpf/bpftool.git
+
+cd bpftool/src
+make install
+
+ln -s /usr/local/sbin/bpftool /usr/sbin/bpftool
 ```
 
 ### Generate bpf2go boilerplate

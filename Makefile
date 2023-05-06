@@ -1,6 +1,6 @@
-.PHONY: tidy vendor generate
+.PHONY: tidy vendor generate run setup-dev-env clean-dev-env ns-tcpdump compile-xdp-pass attach-xdp-pass
 
-ALB_DEV ?= wlo1
+DEV ?= wlo1
 CLANG_VERSION ?= 14
 CFLAGS := -O2 -g -Wall -Werror $(CFLAGS)
 
@@ -15,9 +15,11 @@ generate: export CFLAGS := $(CFLAGS)
 generate:
 	go generate ./...
 
+run-in-ns: generate
+	sudo ip netns exec $(NS) /usr/local/go/bin/go run main.go --iface $(DEV)
+
 run: generate
-	sudo ip netns exec alb /usr/local/go/bin/go run main.go --iface $(ALB_DEV)
-	#sudo /usr/local/go/bin/go run -exec "sudo ip netns exec alb" main.go --iface $(ALB_DEV)
+	sudo /usr/local/go/bin/go run main.go --iface $(DEV)
 
 setup-dev-env:
 	sudo ./develop/setup.sh
@@ -26,4 +28,17 @@ clean-dev-env:
 	sudo ./develop/clean.sh
 
 ns-tcpdump:
-	sudo ip netns exec $(NS) tcpdump -l -nn
+	sudo ip netns exec $(NS) tcpdump -l -nn tcp
+
+compile-xdp-pass:
+	clang-$(CLANG_VERSION) -target bpf -O2 -c develop/xdp_pass.c -o develop/xdp_pass.o
+
+attach-xdp-pass: compile-xdp-pass
+	sudo bpftool net detach xdpgeneric dev $(DEV)
+	sudo rm -f /sys/fs/bpf/$(TARGET)
+	sudo bpftool prog load develop/xdp_pass.o /sys/fs/bpf/$(TARGET)
+	sudo bpftool net attach xdpgeneric pinned /sys/fs/bpf/$(TARGET) dev $(DEV)
+
+uint-to-ip:
+	gcc develop/uint_to_ipv4.c -o /tmp/toipv4.o
+	/tmp/toipv4.o $(UINTIP)

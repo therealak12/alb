@@ -1,3 +1,5 @@
+// go:build ignore
+
 #include <stddef.h>
 #include <linux/bpf.h>
 #include <linux/in.h>
@@ -24,7 +26,7 @@ csum_fold_helper(__u64 csum)
 }
 
 static __always_inline __u16
-ip4h_csum(struct iphdr *iph)
+iph_csum(struct iphdr *iph)
 {
     iph->check = 0;
     unsigned long long csum = bpf_csum_diff(0, 0, (unsigned int *)iph, sizeof(struct iphdr), 0);

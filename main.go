@@ -2,8 +2,9 @@ package main
 
 import (
 	"flag"
-	"github.com/therealak12/alb/internal/bpf"
 	"log"
+
+	"github.com/therealak12/alb/internal/bpf"
 )
 
 var (

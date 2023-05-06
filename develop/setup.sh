@@ -55,3 +55,19 @@ done
 ip link set alb master $BR_DEV
 ip link set s1 master $BR_DEV
 ip link set s2 master $BR_DEV
+
+
+# attach xdp_pass
+sudo rm -f /sys/fs/bpf/xdp_pass
+sudo bpftool prog load develop/xdp_pass.o /sys/fs/bpf/xdp_pass
+for i in {1..2}; do
+  sudo bpftool net attach xdpgeneric pinned /sys/fs/bpf/xdp_pass dev "s$i"
+done
+
+ip l | grep -A 1 'alb\@'
+sudo ip netns exec alb ip l | grep -A 1 'albp\@'
+
+for i in {1..2}; do
+  ip netns exec ns${i} bash sysctl -a 2>/dev/null | grep rp_filter | awk '{print $1}' | xargs -I {} sudo sysctl -w {}=0
+done
+ip netns exec alb bash sysctl -a 2>/dev/null | grep rp_filter | awk '{print $1}' | xargs -I {} sudo sysctl -w {}=0

@@ -1,6 +1,7 @@
 // go:build ignore
 
 #include <stddef.h>
+#include <arpa/inet.h>
 #include <linux/bpf.h>
 #include <linux/in.h>
 #include <linux/if_ether.h>
@@ -17,13 +18,13 @@ struct hdr_container
 
 #define MAX_MAP_TARGETS 16
 
-struct
-{
-    __uint(type, BPF_MAP_TYPE_ARRAY);
-    __uint(max_entries, MAX_MAP_TARGETS);
-    __type(key, __u32);   // simple index
-    __type(value, __u32); // IPv4
-} alb_targets SEC(".maps");
+//struct
+//{
+//    __uint(type, BPF_MAP_TYPE_ARRAY);
+//    __uint(max_entries, MAX_MAP_TARGETS);
+//    __type(key, __u32);   // simple index
+//    __type(value, __u32); // IPv4
+//} alb_targets SEC(".maps");
 
 SEC("xdp")
 int alb(struct xdp_md *ctx)
@@ -85,8 +86,32 @@ int alb(struct xdp_md *ctx)
     //     break;
     // }
 
-    iph->daddr = (__u32)((172 + (16 << 8) + (22 << 16) + (2 << 24)));
-    iph->check = ip4h_csum(iph);
+    bpf_printk("IP source %x", iph->saddr);
+    bpf_printk("IP destination %x", iph->daddr);
+
+    // e2:24:03:b0:f0:d3
+    // h_source = alb ns interface
+    // ethh->h_source[0] = 0xe2;
+    // ethh->h_source[1] = 0x24;
+    // ethh->h_source[2] = 0x03;
+    // ethh->h_source[3] = 0xb0;
+    // ethh->h_source[4] = 0xf0;
+    // ethh->h_source[5] = 0xd3;
+
+#define BACKEND_A 2
+#define BACKEND_B 3
+#define CLIENT 4
+#define LB 5
+
+#define IP_ADDRESS(x) (unsigned int)(172 + (17 << 8) + (0 << 16) + (x << 24))
+
+    char backend = BACKEND_A;
+
+    // iph->daddr = (unsigned int)(172 + (17 << 8) + (0 << 16) + (backend << 24));
+    iph->daddr = IP_ADDRESS(backend);
+    ethh->h_dest[5] = backend;
+
+    iph->check = iph_csum(iph);
 
     return XDP_TX;
 }
