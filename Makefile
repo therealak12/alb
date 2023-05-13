@@ -1,4 +1,4 @@
-.PHONY: tidy vendor generate run setup-dev-env clean-dev-env ns-tcpdump compile-xdp-pass attach-xdp-pass
+.PHONY: tidy vendor generate run setup-dev-env clean-dev-env ns-tcpdump compile-xdp-pass attach-xdp-pass uint-to-ipv4
 
 DEV ?= wlo1
 CLANG_VERSION ?= 14
@@ -39,6 +39,6 @@ attach-xdp-pass: compile-xdp-pass
 	sudo bpftool prog load develop/xdp_pass.o /sys/fs/bpf/$(TARGET)
 	sudo bpftool net attach xdpgeneric pinned /sys/fs/bpf/$(TARGET) dev $(DEV)
 
-uint-to-ip:
+uint-to-ipv4:
 	gcc develop/uint_to_ipv4.c -o /tmp/toipv4.o
 	/tmp/toipv4.o $(UINTIP)

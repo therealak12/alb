@@ -1,5 +1,9 @@
 # bfp load balancer
 
+## Notes
+
+1. ALB uses xdp-generic mode. Using xdp-native mode requires extra work i.e. such as attaching a dummy xdp_pass program to all involved interfaces. Refer to [this article](https://github.com/xdp-project/xdp-tutorial/tree/master/packet03-redirecting#sending-packets-back-to-the-interface-they-came-from) for more explanation.
+
 ## Prerequisites
 
 ### Install bpf2go
@@ -45,8 +49,15 @@ make setup-dev-env
 ```
 
 ### Run
+
+#### Run in host namespace
 ```shell
-make run ALB_DEV=alb
+make run DEV=alb
+```
+
+#### Run in other namespaces
+```shell
+make run DEV=albp NS=alb
 ```
 
 ### Clean environment

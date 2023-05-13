@@ -18,13 +18,13 @@ struct hdr_container
 
 #define MAX_MAP_TARGETS 16
 
-//struct
-//{
-//    __uint(type, BPF_MAP_TYPE_ARRAY);
-//    __uint(max_entries, MAX_MAP_TARGETS);
-//    __type(key, __u32);   // simple index
-//    __type(value, __u32); // IPv4
-//} alb_targets SEC(".maps");
+struct
+{
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, MAX_MAP_TARGETS);
+    __type(key, __u32);   // simple index
+    __type(value, __u32); // IPv4
+} alb_targets SEC(".maps");
 
 SEC("xdp")
 int alb(struct xdp_md *ctx)
@@ -65,15 +65,17 @@ int alb(struct xdp_md *ctx)
         return XDP_PASS;
     }
 
-    // __u32 testValue = 5;
+    // __u32 testValue = (unsigned int)(172 + (16 << 8) + (21 << 16) + (2 << 24));;
+    // __u32 key = 5;
     // bpf_map_update_elem(&alb_targets, &key, &testValue, BPF_ANY);
 
     // __u32 targetIdx;
-    // todo: find a better way than retrying
+    // // todo: find a better solution than retrying
     // while (1)
     // {
     //     // todo: a safer solution for generating random numbers :-?
-    //     targetIdx = bpf_get_prandom_u32() % MAX_MAP_TARGETS;
+    //     // targetIdx = bpf_get_prandom_u32() % MAX_MAP_TARGETS;
+    //     targetIdx = 5;
     //     bpf_printk("random %i", targetIdx);
     //     __u32 *targetIP = bpf_map_lookup_elem(&alb_targets, &targetIdx);
     //     if (!targetIP)
@@ -81,35 +83,43 @@ int alb(struct xdp_md *ctx)
     //         return XDP_PASS;
     //     }
 
-    //     bpf_printk("%i", *targetIP);
-    //     bpf_printk("\n\n");
+    //     bpf_printk("%i\n\n", *targetIP);
     //     break;
     // }
 
-    bpf_printk("IP source %x", iph->saddr);
-    bpf_printk("IP destination %x", iph->daddr);
+    bpf_printk("%d", iph->saddr);
 
-    // e2:24:03:b0:f0:d3
-    // h_source = alb ns interface
-    // ethh->h_source[0] = 0xe2;
-    // ethh->h_source[1] = 0x24;
-    // ethh->h_source[2] = 0x03;
-    // ethh->h_source[3] = 0xb0;
-    // ethh->h_source[4] = 0xf0;
-    // ethh->h_source[5] = 0xd3;
+    if (iph->saddr == (unsigned int)(172 + (16 << 8) + (22 << 16) + (2 << 24)))
+    {
+        iph->daddr = (unsigned int)(172 + (16 << 8) + (21 << 16) + (2 << 24));
+        // ns1 device mac address: 5e:21:c6:e0:fb:0a
+        // using the following line works, but the packet is delivered on both namespaces and the R. packet is not sent :|
+        // memcpy(ethh->h_dest, "5e21c6e0fb0a", ETH_ALEN);
+        ethh->h_dest[0] = 0x5e;
+        ethh->h_dest[1] = 0x21;
+        ethh->h_dest[2] = 0xc6;
+        ethh->h_dest[3] = 0xe0;
+        ethh->h_dest[4] = 0xfb;
+        ethh->h_dest[5] = 0x0a;
+    } else {
+        iph->daddr = (unsigned int)(172 + (16 << 8) + (22 << 16) + (2 << 24));
+        // ns2 dev: 6a:0b:3c:00:1d:99
+        ethh->h_dest[0] = 0x6a;
+        ethh->h_dest[1] = 0x0b;
+        ethh->h_dest[2] = 0x3c;
+        ethh->h_dest[3] = 0x00;
+        ethh->h_dest[4] = 0x1d;
+        ethh->h_dest[5] = 0x99;
+    }
 
-#define BACKEND_A 2
-#define BACKEND_B 3
-#define CLIENT 4
-#define LB 5
-
-#define IP_ADDRESS(x) (unsigned int)(172 + (17 << 8) + (0 << 16) + (x << 24))
-
-    char backend = BACKEND_A;
-
-    // iph->daddr = (unsigned int)(172 + (17 << 8) + (0 << 16) + (backend << 24));
-    iph->daddr = IP_ADDRESS(backend);
-    ethh->h_dest[5] = backend;
+    iph->saddr = (unsigned int)(172 + (16 << 8) + (11 << 16) + (2 << 24));
+    // 82:fa:5d:77:a6:a9
+    ethh->h_source[0] = 0x82;
+    ethh->h_source[1] = 0xfa;
+    ethh->h_source[2] = 0x5d;
+    ethh->h_source[3] = 0x77;
+    ethh->h_source[4] = 0xa6;
+    ethh->h_source[5] = 0xa9;
 
     iph->check = iph_csum(iph);
 

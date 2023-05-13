@@ -3,7 +3,7 @@
 # a more detailed explanation about the setup can be found here:
 # https://medium.com/techlog/diving-into-linux-networking-and-docker-bridge-veth-and-iptables-a05eb27b1e72
 
-export BR_DEV='albr0'
+export BR_DEV='albr'
 export BR_ADDR='172.16.10.1'
 export ALB_DEV='alb'
 export S_DEV='s'
@@ -56,18 +56,14 @@ ip link set alb master $BR_DEV
 ip link set s1 master $BR_DEV
 ip link set s2 master $BR_DEV
 
-
-# attach xdp_pass
-sudo rm -f /sys/fs/bpf/xdp_pass
-sudo bpftool prog load develop/xdp_pass.o /sys/fs/bpf/xdp_pass
+# run http servers
 for i in {1..2}; do
-  sudo bpftool net attach xdpgeneric pinned /sys/fs/bpf/xdp_pass dev "s$i"
+  ip netns exec "ns$i" python3 -m http.server 80 2>&1 > "/tmp/backend${i}_logs" &
 done
 
-ip l | grep -A 1 'alb\@'
-sudo ip netns exec alb ip l | grep -A 1 'albp\@'
-
-for i in {1..2}; do
-  ip netns exec ns${i} bash sysctl -a 2>/dev/null | grep rp_filter | awk '{print $1}' | xargs -I {} sudo sysctl -w {}=0
-done
-ip netns exec alb bash sysctl -a 2>/dev/null | grep rp_filter | awk '{print $1}' | xargs -I {} sudo sysctl -w {}=0
+# attach xdp_pass (not required in xdp_generic mode)
+# sudo rm -f /sys/fs/bpf/xdp_pass
+# sudo bpftool prog load develop/xdp_pass.o /sys/fs/bpf/xdp_pass
+# for i in {1..2}; do
+#   sudo bpftool net attach xdpgeneric pinned /sys/fs/bpf/xdp_pass dev "s$i"
+# done
