@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-export BR_DEV='albr0'
+export BR_DEV='albr'
 export BR_ADDR='172.16.10.1'
 export ALB_DEV='alb'
 export S_DEV='s'
