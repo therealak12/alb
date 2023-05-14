@@ -3,23 +3,26 @@ package main
 import (
 	"flag"
 	"log"
+	"time"
 
 	"github.com/therealak12/alb/internal/bpf"
 )
 
 var (
-	ifaceName string
+	cfgPath string
 )
 
 func main() {
 	// TODO: setup proper logging
 
-	flag.StringVar(&ifaceName, "iface", "", "target interface name")
+	flag.StringVar(&cfgPath, "config-path", "develop/config.yaml", "path to config file")
 	flag.Parse()
 
-	if ifaceName == "" {
-		log.Fatalf("interface name is required")
+	b, err := bpf.New(cfgPath)
+	if err != nil {
+		log.Fatalf("failed to initialize bpf module, %v", err)
 	}
+	defer b.Stop()
 
-	_ = bpf.New(ifaceName)
+	time.Sleep(time.Hour)
 }

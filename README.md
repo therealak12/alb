@@ -2,7 +2,7 @@
 
 ## Notes
 
-1. ALB uses xdp-generic mode. Using xdp-native mode requires extra work i.e. such as attaching a dummy xdp_pass program to all involved interfaces. Refer to [this article](https://github.com/xdp-project/xdp-tutorial/tree/master/packet03-redirecting#sending-packets-back-to-the-interface-they-came-from) for more explanation.
+1. ALB uses xdp-generic mode. Using xdp-native mode requires extra work i.e. such as attaching a dummy xdp_pass program to all involved interfaces. Refer to [this](https://github.com/xdp-project/xdp-tutorial/tree/master/packet03-redirecting#sending-packets-back-to-the-interface-they-came-from) for more explanation.
 
 ## Prerequisites
 

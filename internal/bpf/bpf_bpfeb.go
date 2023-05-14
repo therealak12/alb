@@ -13,6 +13,16 @@ import (
 	"github.com/cilium/ebpf"
 )
 
+type bpfConfig struct {
+	ClientMac    [6]uint8
+	_            [2]byte
+	ClientIp     uint32
+	LbMac        [6]uint8
+	_            [2]byte
+	LbIp         uint32
+	BackendCount uint32
+}
+
 // loadBpf returns the embedded CollectionSpec for bpf.
 func loadBpf() (*ebpf.CollectionSpec, error) {
 	reader := bytes.NewReader(_BpfBytes)
@@ -62,6 +72,7 @@ type bpfProgramSpecs struct {
 // It can be passed ebpf.CollectionSpec.Assign.
 type bpfMapSpecs struct {
 	AlbTargets *ebpf.MapSpec `ebpf:"alb_targets"`
+	Settings   *ebpf.MapSpec `ebpf:"settings"`
 }
 
 // bpfObjects contains all objects after they have been loaded into the kernel.
@@ -84,11 +95,13 @@ func (o *bpfObjects) Close() error {
 // It can be passed to loadBpfObjects or ebpf.CollectionSpec.LoadAndAssign.
 type bpfMaps struct {
 	AlbTargets *ebpf.Map `ebpf:"alb_targets"`
+	Settings   *ebpf.Map `ebpf:"settings"`
 }
 
 func (m *bpfMaps) Close() error {
 	return _BpfClose(
 		m.AlbTargets,
+		m.Settings,
 	)
 }
 

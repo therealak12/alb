@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 
-# a more detailed explanation about the setup can be found here:
+# The following script setup up and environment similar to running 3 docker containers with default bridge network.
+# A more detailed explanation about the setup can be found here:
 # https://medium.com/techlog/diving-into-linux-networking-and-docker-bridge-veth-and-iptables-a05eb27b1e72
 
 export BR_DEV='albr'
@@ -57,9 +58,9 @@ ip link set s1 master $BR_DEV
 ip link set s2 master $BR_DEV
 
 # run http servers
-for i in {1..2}; do
-  ip netns exec "ns$i" python3 -m http.server 80 2>&1 > "/tmp/backend${i}_logs" &
-done
+#for i in {1..2}; do
+#  ip netns exec "ns$i" python3 -m http.server 80 2>&1 > "/tmp/backend${i}_logs" &
+#done
 
 # attach xdp_pass (not required in xdp_generic mode)
 # sudo rm -f /sys/fs/bpf/xdp_pass

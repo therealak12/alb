@@ -18,10 +18,27 @@ struct hdr_container
 
 #define MAX_MAP_TARGETS 16
 
+struct config
+{
+    unsigned char client_mac[ETH_ALEN];
+    unsigned int client_ip;
+    unsigned char lb_mac[ETH_ALEN];
+    unsigned int lb_ip;
+    unsigned int backend_count;
+};
+
 struct
 {
     __uint(type, BPF_MAP_TYPE_ARRAY);
     __uint(max_entries, MAX_MAP_TARGETS);
+    __type(key, __u32); // simple index
+    __type(value, struct config);
+} settings SEC(".maps");
+
+struct
+{
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, 1);
     __type(key, __u32);   // simple index
     __type(value, __u32); // IPv4
 } alb_targets SEC(".maps");
@@ -92,34 +109,44 @@ int alb(struct xdp_md *ctx)
     if (iph->saddr == (unsigned int)(172 + (16 << 8) + (22 << 16) + (2 << 24)))
     {
         iph->daddr = (unsigned int)(172 + (16 << 8) + (21 << 16) + (2 << 24));
-        // ns1 device mac address: 5e:21:c6:e0:fb:0a
+        // ns1 dev: d2:75:0b:1e:dd:c9
         // using the following line works, but the packet is delivered on both namespaces and the R. packet is not sent :|
         // memcpy(ethh->h_dest, "5e21c6e0fb0a", ETH_ALEN);
-        ethh->h_dest[0] = 0x5e;
-        ethh->h_dest[1] = 0x21;
-        ethh->h_dest[2] = 0xc6;
-        ethh->h_dest[3] = 0xe0;
-        ethh->h_dest[4] = 0xfb;
-        ethh->h_dest[5] = 0x0a;
-    } else {
+        ethh->h_dest[0] = 0xd2;
+        ethh->h_dest[1] = 0x75;
+        ethh->h_dest[2] = 0x0b;
+        ethh->h_dest[3] = 0x1e;
+        ethh->h_dest[4] = 0xdd;
+        ethh->h_dest[5] = 0xc9;
+
+        // alb host dev e2:24:03:b0:f0:d3
+        ethh->h_dest[0] = 0xe2;
+        ethh->h_dest[1] = 0x24;
+        ethh->h_dest[2] = 0x03;
+        ethh->h_dest[3] = 0xb0;
+        ethh->h_dest[4] = 0xf0;
+        ethh->h_dest[5] = 0xd3;
+    }
+    else
+    {
         iph->daddr = (unsigned int)(172 + (16 << 8) + (22 << 16) + (2 << 24));
-        // ns2 dev: 6a:0b:3c:00:1d:99
-        ethh->h_dest[0] = 0x6a;
-        ethh->h_dest[1] = 0x0b;
-        ethh->h_dest[2] = 0x3c;
-        ethh->h_dest[3] = 0x00;
-        ethh->h_dest[4] = 0x1d;
-        ethh->h_dest[5] = 0x99;
+        // ns2 dev: 92:99:07:b4:30:f9
+        ethh->h_dest[0] = 0x92;
+        ethh->h_dest[1] = 0x99;
+        ethh->h_dest[2] = 0x07;
+        ethh->h_dest[3] = 0xb4;
+        ethh->h_dest[4] = 0x30;
+        ethh->h_dest[5] = 0xf9;
     }
 
     iph->saddr = (unsigned int)(172 + (16 << 8) + (11 << 16) + (2 << 24));
-    // 82:fa:5d:77:a6:a9
-    ethh->h_source[0] = 0x82;
-    ethh->h_source[1] = 0xfa;
-    ethh->h_source[2] = 0x5d;
-    ethh->h_source[3] = 0x77;
-    ethh->h_source[4] = 0xa6;
-    ethh->h_source[5] = 0xa9;
+    // alb ns dev: d6:47:af:2c:d9:01
+    ethh->h_source[0] = 0xd6;
+    ethh->h_source[1] = 0x47;
+    ethh->h_source[2] = 0xaf;
+    ethh->h_source[3] = 0x2c;
+    ethh->h_source[4] = 0xd9;
+    ethh->h_source[5] = 0x01;
 
     iph->check = iph_csum(iph);
 
