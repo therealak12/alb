@@ -62,16 +62,25 @@ func getBpfConfig(cfg *config.Config) (bpfConfig, error) {
 	if err != nil {
 		return bpfConfig{}, err
 	}
-	clientIP, err := utils.IPv4ToUint32(cfg.ClientDev.Addr)
-	if err != nil {
-		return bpfConfig{}, err
-	}
-
 	lbMac, err := utils.MacToUint8Array(cfg.LBDev.Mac)
 	if err != nil {
 		return bpfConfig{}, err
 	}
+
+	clientIP, err := utils.IPv4ToUint32(cfg.ClientDev.Addr)
+	if err != nil {
+		return bpfConfig{}, err
+	}
 	clientMac, err := utils.MacToUint8Array(cfg.ClientDev.Mac)
+	if err != nil {
+		return bpfConfig{}, err
+	}
+
+	backendIPs, err := getBackendIPs(cfg.BackendDevs)
+	if err != nil {
+		return bpfConfig{}, err
+	}
+	backendMacs, err := getBackendMacs(cfg.BackendDevs)
 	if err != nil {
 		return bpfConfig{}, err
 	}
@@ -82,7 +91,33 @@ func getBpfConfig(cfg *config.Config) (bpfConfig, error) {
 		LbMac:        lbMac,
 		LbIp:         lbIP,
 		BackendCount: uint32(cfg.BackendCount),
+		BackendMacs:  backendMacs,
+		BackendIps:   backendIPs,
 	}, nil
+}
+
+func getBackendIPs(devs []config.Device) ([16]uint32, error) {
+	var ips [16]uint32
+	for i, dev := range devs {
+		mac, err := utils.IPv4ToUint32(dev.Addr)
+		if err != nil {
+			return ips, err
+		}
+		ips[i] = mac
+	}
+	return ips, nil
+}
+
+func getBackendMacs(devs []config.Device) ([16][6]uint8, error) {
+	var macs [16][6]uint8
+	for i, dev := range devs {
+		mac, err := utils.MacToUint8Array(dev.Mac)
+		if err != nil {
+			return macs, err
+		}
+		macs[i] = mac
+	}
+	return macs, nil
 }
 
 func (b *BPF) UpdateSettings(settings bpfConfig) error {

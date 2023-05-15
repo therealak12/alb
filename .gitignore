@@ -60,3 +60,5 @@ cmake-build-debug
 
 ############################# custom
 config/config.yaml
+internal/bpf/bpf_bpfel.go
+internal/bpf/bpf_bpfeb.go
