@@ -86,56 +86,36 @@ int alb(struct xdp_md *ctx)
         return XDP_PASS;
     }
 
-    __u32 targetIdx = bpf_get_prandom_u32() % cfg->backend_count;
-    // todo: Understand what I did here. BPF verifier seems to be too lenient! (I didn't check backend_macs)
-    if (targetIdx > sizeof(cfg->backend_ips)/sizeof(cfg->backend_ips[0])) {
-        return XDP_PASS;
-    }
-    bpf_printk("ip %d", cfg->backend_ips[targetIdx]);
-    bpf_printk("mac %s", cfg->backend_macs[targetIdx]);
-
     if (iph->saddr == cfg->client_ip)
     {
-        iph->daddr = (unsigned int)(172 + (16 << 8) + (11 << 16) + (2 << 24));
-        // ns1 dev: d2:75:0b:1e:dd:c9
-        // using the following line works, but the packet is delivered on both namespaces and the R. packet is not sent :|
-        // memcpy(ethh->h_dest, "5e21c6e0fb0a", ETH_ALEN);
-        ethh->h_dest[0] = 0xd2;
-        ethh->h_dest[1] = 0x75;
-        ethh->h_dest[2] = 0x0b;
-        ethh->h_dest[3] = 0x1e;
-        ethh->h_dest[4] = 0xdd;
-        ethh->h_dest[5] = 0xc9;
+        __u32 targetIdx = bpf_get_prandom_u32() % cfg->backend_count;
+        // selected backend
+        // todo: Understand what I did here. Why the same check is not required for backend_macs ?
+        // (Learn more about how BPF verifier works)
+        if (targetIdx > sizeof(cfg->backend_ips) / sizeof(cfg->backend_ips[0]))
+        {
+            return XDP_PASS;
+        }
+        iph->daddr = cfg->backend_ips[targetIdx];
 
-        // alb host dev e2:24:03:b0:f0:d3
-        ethh->h_dest[0] = 0xe2;
-        ethh->h_dest[1] = 0x24;
-        ethh->h_dest[2] = 0x03;
-        ethh->h_dest[3] = 0xb0;
-        ethh->h_dest[4] = 0xf0;
-        ethh->h_dest[5] = 0xd3;
+        if (sizeof(cfg->backend_macs[targetIdx]) / sizeof(unsigned char) < ETH_ALEN) {
+            bpf_printk("%d", sizeof(cfg->backend_macs[targetIdx]) / sizeof(unsigned char));
+            return XDP_PASS;
+        }
+
+        memcpy(ethh->h_dest, cfg->backend_macs[targetIdx], ETH_ALEN);
+        // bpf_printk("%x", cfg->backend_macs[targetIdx][0]);
     }
     else
     {
-        // client internal ip
+        // client
         iph->daddr = cfg->client_ip;
-        // client dev: 92:99:07:b4:30:f9
-        ethh->h_dest[0] = 0x92;
-        ethh->h_dest[1] = 0x99;
-        ethh->h_dest[2] = 0x07;
-        ethh->h_dest[3] = 0xb4;
-        ethh->h_dest[4] = 0x30;
-        ethh->h_dest[5] = 0xf9;
+        memcpy(ethh->h_dest, cfg->client_mac, ETH_ALEN);
     }
 
+    // alb
     iph->saddr = cfg->lb_ip;
-    // alb ns dev: d6:47:af:2c:d9:01
-    ethh->h_source[0] = 0xd6;
-    ethh->h_source[1] = 0x47;
-    ethh->h_source[2] = 0xaf;
-    ethh->h_source[3] = 0x2c;
-    ethh->h_source[4] = 0xd9;
-    ethh->h_source[5] = 0x01;
+    memcpy(ethh->h_source, cfg->lb_mac, ETH_ALEN);
 
     iph->check = iph_csum(iph);
 
