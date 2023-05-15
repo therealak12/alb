@@ -10,8 +10,8 @@ import (
 )
 
 type Device struct {
-	Name string `koanf:"device"`
-	Mac  string `koanf:"deviceMac"`
+	Name string `koanf:"name"`
+	Mac  string `koanf:"mac"`
 	Addr string `koanf:"addr"`
 }
 

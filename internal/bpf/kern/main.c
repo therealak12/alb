@@ -30,7 +30,7 @@ struct config
 struct
 {
     __uint(type, BPF_MAP_TYPE_ARRAY);
-    __uint(max_entries, MAX_MAP_TARGETS);
+    __uint(max_entries, 1);
     __type(key, __u32); // simple index
     __type(value, struct config);
 } settings SEC(".maps");
@@ -104,11 +104,18 @@ int alb(struct xdp_md *ctx)
     //     break;
     // }
 
-    bpf_printk("%d", iph->saddr);
+    __u32 settings_key = 0;
+    struct config *cfg = bpf_map_lookup_elem(&settings, &settings_key);
+    if (!cfg) {
+        return XDP_PASS;
+    }
+    bpf_printk("%d", cfg->backend_count);
+    bpf_printk("%d", cfg->client_ip);
+    bpf_printk("%d", (unsigned int)(172 + (16 << 8) + (41 << 16) + (2 << 24)));
 
-    if (iph->saddr == (unsigned int)(172 + (16 << 8) + (22 << 16) + (2 << 24)))
+    if (iph->saddr == (unsigned int)(172 + (16 << 8) + (41 << 16) + (2 << 24))) // client internal ip
     {
-        iph->daddr = (unsigned int)(172 + (16 << 8) + (21 << 16) + (2 << 24));
+        iph->daddr = (unsigned int)(172 + (16 << 8) + (11 << 16) + (2 << 24));
         // ns1 dev: d2:75:0b:1e:dd:c9
         // using the following line works, but the packet is delivered on both namespaces and the R. packet is not sent :|
         // memcpy(ethh->h_dest, "5e21c6e0fb0a", ETH_ALEN);
@@ -129,8 +136,9 @@ int alb(struct xdp_md *ctx)
     }
     else
     {
-        iph->daddr = (unsigned int)(172 + (16 << 8) + (22 << 16) + (2 << 24));
-        // ns2 dev: 92:99:07:b4:30:f9
+        // client internal ip
+        iph->daddr = (unsigned int)(172 + (16 << 8) + (41 << 16) + (2 << 24));
+        // client dev: 92:99:07:b4:30:f9
         ethh->h_dest[0] = 0x92;
         ethh->h_dest[1] = 0x99;
         ethh->h_dest[2] = 0x07;
@@ -139,7 +147,7 @@ int alb(struct xdp_md *ctx)
         ethh->h_dest[5] = 0xf9;
     }
 
-    iph->saddr = (unsigned int)(172 + (16 << 8) + (11 << 16) + (2 << 24));
+    iph->saddr = (unsigned int)(172 + (16 << 8) + (31 << 16) + (2 << 24));
     // alb ns dev: d6:47:af:2c:d9:01
     ethh->h_source[0] = 0xd6;
     ethh->h_source[1] = 0x47;

@@ -15,7 +15,7 @@ var (
 func main() {
 	// TODO: setup proper logging
 
-	flag.StringVar(&cfgPath, "config-path", "develop/config.yaml", "path to config file")
+	flag.StringVar(&cfgPath, "config-path", "config/config.yaml", "path to config file")
 	flag.Parse()
 
 	b, err := bpf.New(cfgPath)

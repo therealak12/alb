@@ -1,0 +1,17 @@
+iface_name: albp
+lb_dev:
+  name: "alb"
+  mac: "ALB_MAC"
+  addr: "172.16.31.2"
+client_dev:
+  name: "client"
+  mac: "CLIENT_MAC"
+  addr: "172.16.41.2"
+backend_count: 2
+backend_devs:
+  - name: "s1"
+    mac: "S1_MAC"
+    addr: "172.16.11.2"
+  - name: "s2"
+    mac: "S2_MAC"
+    addr: "172.16.21.2"

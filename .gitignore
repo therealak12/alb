@@ -57,3 +57,6 @@ Mkfile.old
 dkms.conf
 
 cmake-build-debug
+
+############################# custom
+config/config.yaml

@@ -16,10 +16,10 @@ generate:
 	go generate ./...
 
 run-in-ns: generate
-	sudo ip netns exec $(NS) /usr/local/go/bin/go run main.go --iface $(DEV)
+	sudo ip netns exec $(NS) /usr/local/go/bin/go run main.go
 
 run: generate
-	sudo /usr/local/go/bin/go run main.go --iface $(DEV)
+	sudo /usr/local/go/bin/go run main.go
 
 setup-dev-env:
 	sudo ./develop/setup.sh
