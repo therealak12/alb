@@ -92,19 +92,13 @@ int alb(struct xdp_md *ctx)
         // selected backend
         // todo: Understand what I did here. Why the same check is not required for backend_macs ?
         // (Learn more about how BPF verifier works)
-        if (targetIdx > sizeof(cfg->backend_ips) / sizeof(cfg->backend_ips[0]))
+        if (targetIdx >= sizeof(cfg->backend_ips) / sizeof(cfg->backend_ips[0]))
         {
             return XDP_PASS;
         }
         iph->daddr = cfg->backend_ips[targetIdx];
 
-        if (sizeof(cfg->backend_macs[targetIdx]) / sizeof(unsigned char) < ETH_ALEN) {
-            bpf_printk("%d", sizeof(cfg->backend_macs[targetIdx]) / sizeof(unsigned char));
-            return XDP_PASS;
-        }
-
         memcpy(ethh->h_dest, cfg->backend_macs[targetIdx], ETH_ALEN);
-        // bpf_printk("%x", cfg->backend_macs[targetIdx][0]);
     }
     else
     {
