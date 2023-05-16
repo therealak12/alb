@@ -1,6 +1,7 @@
 package bpf
 
 import (
+	"errors"
 	"net"
 
 	"github.com/cilium/ebpf"
@@ -36,6 +37,10 @@ func New(cfgPath string) (*BPF, error) {
 
 	objs := bpfObjects{}
 	if err := loadBpfObjects(&objs, nil); err != nil {
+		var ve *ebpf.VerifierError
+		if errors.As(err, &ve) {
+			return nil, ve
+		}
 		return nil, err
 	}
 	bpf.objs = append(bpf.objs, &objs)

@@ -20,7 +20,7 @@ func main() {
 
 	b, err := bpf.New(cfgPath)
 	if err != nil {
-		log.Fatalf("failed to initialize bpf module, %v", err)
+		log.Fatalf("failed to initialize bpf module, %+v", err)
 	}
 	defer b.Stop()
 
