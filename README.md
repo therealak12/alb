@@ -2,7 +2,13 @@
 
 ## Notes
 
-1. ALB uses xdp-generic mode. Using xdp-native mode requires extra work i.e. such as attaching a dummy xdp_pass program to all involved interfaces. Refer to [this](https://github.com/xdp-project/xdp-tutorial/tree/master/packet03-redirecting#sending-packets-back-to-the-interface-they-came-from) for more explanation.
+1. The project is inspired by [lizrice lb from scratch](https://github.com/lizrice/lb-from-scratch)
+   and [katran](https://github.com/facebookincubator/katran)
+
+2. ALB uses xdp-generic mode. Using xdp-native mode requires extra work such as attaching a dummy xdp_pass program to
+   all involved interfaces. Refer
+   to [this](https://github.com/xdp-project/xdp-tutorial/tree/master/packet03-redirecting#sending-packets-back-to-the-interface-they-came-from)
+   for more explanation.
 
 ## Prerequisites
 
@@ -44,23 +50,27 @@ make generate
 ## Develop
 
 ### Setup environment
+
 ```shell
 make setup-dev-env
 ```
 
 ### Run
 
-#### Run in host namespace
 ```shell
-make run DEV=alb
+make run-in-ns NS=alb
 ```
 
-#### Run in other namespaces
+### Send Request to ALB
+
+Make sure http servers are listening on port 80 in ns1 and ns2, then run:
+
 ```shell
-make run DEV=albp NS=alb
+sudo ip netns exec client curl 172.16.31.2
 ```
 
 ### Clean environment
+
 ```shell
 make clean-dev-env
 ```

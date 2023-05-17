@@ -21,6 +21,8 @@ export CLIENT_PEER=${CLIENT_DEV}p
 
 export XDP_MODE="generic" # or native
 
+export RUN_SERVERS=${RUN_SERVERS:=0}
+
 
 # create namespaces
 ip netns add $ALB_NS
@@ -88,12 +90,12 @@ sed -i "s/CLIENT_MAC/$CLIENT_MAC/" config/config.yaml
 sed -i "s/S1_MAC/$S1_MAC/" config/config.yaml
 sed -i "s/S2_MAC/$S2_MAC/" config/config.yaml
 
-exit 0
-
-# run http servers
-for i in {1..2}; do
-  ip netns exec "ns$i" python3 -m http.server 80 2>&1 > "/tmp/backend${i}_logs" &
-done
+# run http servers (should be killed manually)
+if [ $RUN_SERVERS -eq 1 ] ; then
+  for i in {1..2}; do
+    ip netns exec "ns$i" python3 -m http.server 80 2>&1 > "/tmp/backend${i}_logs" &
+  done
+fi
 
 # attach xdp_pass (not required in xdp generic mode)
 if [ "$XDP_MODE" = "native" ]; then
