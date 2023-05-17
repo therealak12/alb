@@ -10,6 +10,9 @@
    to [this](https://github.com/xdp-project/xdp-tutorial/tree/master/packet03-redirecting#sending-packets-back-to-the-interface-they-came-from)
    for more explanation.
 
+## Structure
+![ALB Structure](imgs/structure.png)
+
 ## Prerequisites
 
 ### Install bpf2go
